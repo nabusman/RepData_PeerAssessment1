@@ -4,17 +4,167 @@
 ## Loading and preprocessing the data
 
 
+```{r, echo=TRUE}
+unzip("activity.zip")
+data <- read.csv("activity.csv", header = T)
+data$date <- as.Date(data$date)
+
+library(ggplot2)
+```
+
+
 
 ## What is mean total number of steps taken per day?
 
+
+Histogram of Total Steps per Day
+
+```{r, echo=TRUE}
+total_steps <- aggregate(steps ~ date, data = data, FUN = sum)
+qplot(
+    total_steps$date,
+    total_steps$steps,
+    geom = "histogram",
+    stat = "identity",
+    main = "Total Steps Taken per Day",
+    xlab = "Date",
+    ylab = "Steps")
+```
+
+Mean Steps per Day
+
+```{r, echo=TRUE}
+mean(total_steps$steps)
+```
+
+Median Steps per Day
+
+```{r, echo=TRUE}
+median(total_steps$steps)
+```
 
 
 ## What is the average daily activity pattern?
 
 
+```{r, echo=TRUE}
+interval_steps <- aggregate(steps ~ interval, data = data, FUN = mean)
+qplot(
+    interval_steps$interval,
+    interval_steps$steps,
+    geom = "line",
+    stat = "identity",
+    main = "Average Steps Taken per Interval",
+    xlab = "Interval",
+    ylab = "Steps")
+```
+
+Interval with Maximum Number of Steps
+
+```{r, echo=TRUE}
+interval_steps[which(interval_steps$steps == max(interval_steps$steps)),1]
+```
 
 ## Imputing missing values
 
+Total Number Missing Values in Data
 
+```{r, echo=TRUE}
+length(data[is.na(data)])
+```
+
+Impute Data Based on the Average Steps per Interval
+
+```{r, echo=TRUE}
+imputed_data <- data
+for(row in 1:nrow(imputed_data)) {
+    if(is.na(imputed_data[row,1])) {
+        imputed_data[row,1] <- interval_steps[
+            which(interval_steps$interval == imputed_data[row,3]),2]
+    }
+}
+```
+
+Histogram of Imputed Data
+
+```{r, echo=TRUE}
+total_imputed_steps <- aggregate(steps ~ date, data = imputed_data, FUN = sum)
+qplot(
+    total_steps$date,
+    total_steps$steps,
+    geom = "histogram",
+    stat = "identity",
+    main = "Total Steps Taken per Day",
+    xlab = "Date",
+    ylab = "Steps")
+```
+
+Mean Steps per Day (Imputed Data)
+
+```{r, echo=TRUE}
+mean(total_imputed_steps$steps)
+```
+
+Median Steps per Day (Imputed Data)
+
+```{r, echo=TRUE}
+median(total_imputed_steps$steps)
+```
+
+The mean and median of the imputed data are very similar to the mean and median
+of the original data, which makes sense because I replaced the missing values
+with the mean of the average steps taken in that interval. Overall, there does
+not seem to be a significant impact of imputing the missing values on the mean
+and median, however, I do know that the confidence intervals will (unjustifiably)
+increase on my estimate of the mean and median if I use this data to estimate
+the mean and median of the population.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Create Day Type Column
+
+```{r, echo=TRUE}
+day_type <- c()
+for(row in 1:nrow(imputed_data)) {
+    if(weekdays(imputed_data[row,2]) == "Saturday" || 
+        weekdays(imputed_data[row,2]) == "Sunday") {
+        day_type <- c(day_type, "Weekend")
+    } else {
+        day_type <- c(day_type, "Weekday")
+    }
+}
+day_type <- as.factor(day_type)
+imputed_data$day_type <- day_type
+```
+
+Graph Comparing Weekday and Weekend Activity
+
+```{r, echo=TRUE}
+interval_steps_weekend <- aggregate(steps ~ interval,
+    data = imputed_data[which(imputed_data$day_type == "Weekend"),],
+    FUN = mean)
+interval_steps_weekend$day_type <- "Weekend"
+interval_steps_weekday <- aggregate(steps ~ interval,
+    data = imputed_data[which(imputed_data$day_type == "Weekday"),],
+    FUN = mean)
+interval_steps_weekday$day_type <- "Weekday"
+combined_interval_steps <- rbind(interval_steps_weekday, interval_steps_weekend)
+combined_interval_steps$day_type <- as.factor(combined_interval_steps$day_type)
+qplot(
+    x = interval,
+    y = steps,
+    data = combined_interval_steps,
+    geom = "line",
+    main = "Weekend vs Weekday Activity",
+    xlab = "Interval",
+    ylab = "Steps",
+    facets = day_type ~ .)
+```
+
+
+
+
+
+
+
+
