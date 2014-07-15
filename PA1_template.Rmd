@@ -22,8 +22,9 @@ Histogram of Total Steps per Day
 ```{r, echo=TRUE}
 total_steps <- aggregate(steps ~ date, data = data, FUN = sum)
 qplot(
-    total_steps$date,
-    total_steps$steps,
+    x = date,
+    y = steps,
+    data = total_steps,
     geom = "histogram",
     stat = "identity",
     main = "Total Steps Taken per Day",
@@ -50,8 +51,9 @@ median(total_steps$steps)
 ```{r, echo=TRUE}
 interval_steps <- aggregate(steps ~ interval, data = data, FUN = mean)
 qplot(
-    interval_steps$interval,
-    interval_steps$steps,
+    x = interval,
+    y = steps,
+    data = interval_steps,
     geom = "line",
     stat = "identity",
     main = "Average Steps Taken per Interval",
@@ -90,8 +92,9 @@ Histogram of Imputed Data
 ```{r, echo=TRUE}
 total_imputed_steps <- aggregate(steps ~ date, data = imputed_data, FUN = sum)
 qplot(
-    total_steps$date,
-    total_steps$steps,
+    x = date,
+    y = steps,
+    data = total_imputed_steps,
     geom = "histogram",
     stat = "identity",
     main = "Total Steps Taken per Day",
